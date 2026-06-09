@@ -14,9 +14,6 @@ function adminCredentialsPaths(): array
 {
     return [
         dirname(__DIR__, 2) . '/admin.credentials.php',
-        dirname(__DIR__, 2) . '/hectometer.admin.credentials.php',
-        dirname(__DIR__, 2) . '/knmi.admin.credentials.php',
-        __DIR__ . '/admin_credentials.php',
     ];
 }
 
@@ -60,7 +57,7 @@ function adminRequireCsrf(): void
 {
     $token = (string)($_POST['csrf'] ?? '');
     if (!hash_equals(adminCsrf(), $token)) {
-        adminRedirect(['type' => 'alert', 'message' => 'Ongeldige sessie. Probeer opnieuw.']);
+        adminRedirect(['type' => 'danger', 'message' => 'Ongeldige sessie. Probeer opnieuw.']);
     }
 }
 
@@ -115,13 +112,13 @@ function adminHandleAuthPost(): void
             adminRedirect(['type' => 'success', 'message' => 'Ingelogd.']);
         }
 
-        adminRedirect(['type' => 'alert', 'message' => 'Ongeldige gebruikersnaam of wachtwoord.']);
+        adminRedirect(['type' => 'danger', 'message' => 'Ongeldige gebruikersnaam of wachtwoord.']);
     }
 
     if ($action === 'create_admin') {
         adminRequireCsrf();
         if (adminLoadCredentials() !== null) {
-            adminRedirect(['type' => 'alert', 'message' => 'Er bestaat al een admin-account.']);
+            adminRedirect(['type' => 'danger', 'message' => 'Er bestaat al een admin-account.']);
         }
 
         $username = trim((string)($_POST['username'] ?? ''));
@@ -129,7 +126,7 @@ function adminHandleAuthPost(): void
         $passwordRepeat = (string)($_POST['password_repeat'] ?? '');
 
         if ($username === '' || strlen($password) < 10 || $password !== $passwordRepeat) {
-            adminRedirect(['type' => 'alert', 'message' => 'Kies een gebruikersnaam en twee gelijke wachtwoorden van minimaal 10 tekens.']);
+            adminRedirect(['type' => 'danger', 'message' => 'Kies een gebruikersnaam en twee gelijke wachtwoorden van minimaal 10 tekens.']);
         }
 
         $path = adminCredentialsPath();
@@ -140,7 +137,7 @@ function adminHandleAuthPost(): void
         ], true) . ";\n";
 
         if (file_put_contents($path, $content, LOCK_EX) === false) {
-            adminRedirect(['type' => 'alert', 'message' => 'Admin credentials konden niet worden opgeslagen.']);
+            adminRedirect(['type' => 'danger', 'message' => 'Admin credentials konden niet worden opgeslagen.']);
         }
 
         adminRedirect(['type' => 'success', 'message' => 'Admin-account aangemaakt. Log nu in.']);
@@ -153,70 +150,69 @@ function adminRenderAuthPage(string $title = 'NWB beheer'): void
     $flash = adminFlash();
     $credentialPath = adminCredentialsPath();
     ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= h($title) ?></title>
-    <link rel="stylesheet" href="/admin/css/admin-style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="css/admin-style.css" rel="stylesheet">
 </head>
 <body>
-    <main class="admin-container login-shell">
-        <header class="admin-header">
-            <div>
-                <p class="eyebrow">Hectometerpaaltjes</p>
-                <h1><?= h($credentials === null ? 'Admin setup' : 'Inloggen') ?></h1>
-            </div>
-            <a class="button button-light" href="/">Website</a>
-        </header>
-
-        <?php if ($flash): ?>
-            <section class="admin-card <?= h($flash['type'] ?? 'success') ?>">
-                <p><?= h($flash['message'] ?? '') ?></p>
-            </section>
-        <?php endif; ?>
-
-        <section class="admin-card">
+    <div class="container admin-container">
+        <div class="login-shell">
+            <div class="admin-card">
+                <div class="admin-header">
+                    <h1 class="h4 mb-1"><?= h($credentials === null ? 'Hectometer Admin Setup' : 'Hectometer Admin Login') ?></h1>
+                    <div><?= h($credentials === null ? 'Maak de eerste admin login aan.' : 'Log in om NWB data en import te beheren.') ?></div>
+                </div>
+                <div class="card-body">
+                    <?php if ($flash): ?>
+                        <div class="alert alert-<?= h($flash['type'] ?? 'success') ?>">
+                            <?= h($flash['message'] ?? '') ?>
+                        </div>
+                    <?php endif; ?>
             <?php if ($credentials === null): ?>
-                <h2>Admin-account aanmaken</h2>
-                <p>Er is nog geen admin credentials-bestand gevonden. Het bestand wordt buiten de webroot aangemaakt.</p>
+                <p class="text-muted">Er is nog geen admin credentials-bestand gevonden. Het bestand wordt buiten de webroot aangemaakt.</p>
                 <pre><code><?= h($credentialPath) ?></code></pre>
-                <form method="post" class="admin-form">
+                <form method="post">
                     <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
                     <input type="hidden" name="action" value="create_admin">
-                    <label>
-                        <span>Gebruikersnaam</span>
-                        <input name="username" type="text" autocomplete="username" required>
-                    </label>
-                    <label>
-                        <span>Wachtwoord</span>
-                        <input name="password" type="password" autocomplete="new-password" required minlength="10">
-                    </label>
-                    <label>
-                        <span>Herhaal wachtwoord</span>
-                        <input name="password_repeat" type="password" autocomplete="new-password" required minlength="10">
-                    </label>
-                    <button class="button" type="submit">Account aanmaken</button>
+                    <div class="mb-3">
+                        <label class="form-label" for="username">Gebruikersnaam</label>
+                        <input class="form-control" id="username" name="username" autocomplete="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="password">Wachtwoord</label>
+                        <input class="form-control" id="password" name="password" type="password" autocomplete="new-password" minlength="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="password_repeat">Herhaal wachtwoord</label>
+                        <input class="form-control" id="password_repeat" name="password_repeat" type="password" autocomplete="new-password" minlength="10" required>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Admin aanmaken</button>
                 </form>
             <?php else: ?>
-                <h2>Inloggen</h2>
-                <form method="post" class="admin-form">
+                <form method="post">
                     <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
                     <input type="hidden" name="action" value="login">
-                    <label>
-                        <span>Gebruikersnaam</span>
-                        <input name="username" type="text" autocomplete="username" required>
-                    </label>
-                    <label>
-                        <span>Wachtwoord</span>
-                        <input name="password" type="password" autocomplete="current-password" required>
-                    </label>
-                    <button class="button" type="submit">Inloggen</button>
+                    <div class="mb-3">
+                        <label class="form-label" for="login_username">Gebruikersnaam</label>
+                        <input class="form-control" id="login_username" name="username" autocomplete="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="login_password">Wachtwoord</label>
+                        <input class="form-control" id="login_password" name="password" type="password" autocomplete="current-password" required>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Inloggen</button>
                 </form>
             <?php endif; ?>
-        </section>
-    </main>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
     <?php

@@ -6,20 +6,25 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../lib/HectometerRepository.php';
 require_once __DIR__ . '/auth.php';
 
-$messages = [];
-$error = null;
-$stats = null;
-$credentialsPath = dirname(__DIR__, 2) . '/database.credentials.php';
-$flash = null;
-
 adminHandleAuthPost();
 
 if (!adminIsLoggedIn()) {
-    adminRenderAuthPage('NWB setup');
+    adminRenderAuthPage('Hectometer Setup');
     exit;
 }
 
 $flash = adminFlash();
+$messages = [];
+$adminError = null;
+$stats = [
+    'hectopunten' => 0,
+    'wegvakken' => 0,
+    'roads' => 0,
+    'last_updated' => null,
+];
+$db = null;
+$credentialsPath = dirname(__DIR__, 2) . '/database.credentials.php';
+$adminUser = $_SESSION['admin_user'] ?? 'Admin';
 
 function runSchema(PDO $db, string $schemaPath): void
 {
@@ -50,53 +55,74 @@ try {
     $repository = new HectometerRepository($db);
     $stats = $repository->stats();
 } catch (Throwable $exception) {
-    $error = $exception->getMessage();
+    $adminError = $exception->getMessage();
 }
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>NWB setup</title>
-    <link rel="stylesheet" href="/admin/css/admin-style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hectometer Setup</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="css/admin-style.css" rel="stylesheet">
 </head>
 <body>
-    <main class="admin-container">
-        <header class="admin-header">
-            <div>
-                <p class="eyebrow">Hectometerpaaltjes</p>
-                <h1>Setup</h1>
+    <div class="container admin-container">
+        <div class="admin-card">
+            <div class="admin-header d-flex flex-column flex-md-row justify-content-between gap-3">
+                <div>
+                    <h1 class="h3 mb-1"><i class="bi bi-database-gear me-2"></i>Hectometer Setup</h1>
+                    <div>Database schema en configuratie.</div>
+                </div>
+                <div class="admin-toolbar d-flex flex-wrap gap-2">
+                    <span class="badge bg-light text-dark admin-user-badge"><i class="bi bi-person-circle me-1"></i><?= h($adminUser) ?></span>
+                    <a class="btn btn-outline-light btn-sm" href="index.php"><i class="bi bi-speedometer2 me-1"></i>Admin</a>
+                    <a class="btn btn-outline-light btn-sm" href="../"><i class="bi bi-house-door me-1"></i>Website</a>
+                    <form method="post">
+                        <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
+                        <input type="hidden" name="action" value="logout">
+                        <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-box-arrow-right me-1"></i>Uitloggen</button>
+                    </form>
+                </div>
             </div>
-            <div class="admin-toolbar">
-                <a class="button button-light" href="/admin/">Beheer</a>
-                <form method="post">
-                    <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
-                    <input type="hidden" name="action" value="logout">
-                    <button class="button button-light" type="submit">Uitloggen</button>
-                </form>
-            </div>
-        </header>
+        </div>
 
         <?php if ($flash): ?>
-            <section class="admin-card <?= h($flash['type'] ?? 'success') ?>">
-                <p><?= h($flash['message'] ?? '') ?></p>
-            </section>
+            <div class="alert alert-<?= h($flash['type'] ?? 'success') ?>"><?= h($flash['message'] ?? '') ?></div>
         <?php endif; ?>
 
         <?php foreach ($messages as $message): ?>
-            <section class="admin-card success">
-                <p><?= h($message) ?></p>
-            </section>
+            <div class="alert alert-success"><?= h($message) ?></div>
         <?php endforeach; ?>
 
-        <?php if ($error): ?>
-            <section class="admin-card alert">
-                <h2>Configuratie nodig</h2>
-                <p><?= h($error) ?></p>
-                <p>Maak bij voorkeur dit bestand buiten de webroot:</p>
-                <pre><code><?= h($credentialsPath) ?></code></pre>
-                <pre><code>&lt;?php
+        <?php if ($adminError): ?>
+            <div class="alert alert-danger"><?= h($adminError) ?></div>
+        <?php endif; ?>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="bi bi-database text-primary me-2"></i>Database schema</h2>
+                        <p class="text-muted">Deze setup maakt de MySQL-tabellen <code>wegvakken</code> en <code>hectopunten</code>.</p>
+                        <form method="post" class="d-grid gap-2">
+                            <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
+                            <input type="hidden" name="action" value="install">
+                            <button class="btn btn-primary action-btn w-100" type="submit">Schema bijwerken</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="bi bi-key text-primary me-2"></i>Database credentials</h2>
+                        <div class="small text-muted mb-2">Primair bestand buiten de webroot:</div>
+                        <pre><code><?= h($credentialsPath) ?></code></pre>
+                        <pre><code>&lt;?php
 return [
     'host' =&gt; 'localhost',
     'port' =&gt; '3306',
@@ -104,40 +130,41 @@ return [
     'username' =&gt; 'database_user',
     'password' =&gt; 'database_password',
 ];</code></pre>
-            </section>
-        <?php else: ?>
-            <section class="admin-card">
-                <h2>Database schema</h2>
-                <p>Deze setup maakt de MySQL-tabellen `wegvakken` en `hectopunten` met kolommen voor lon/lat, metadata en indexen.</p>
-                <form method="post">
-                    <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
-                    <input type="hidden" name="action" value="install">
-                    <button class="button" type="submit">Schema bijwerken</button>
-                </form>
-            </section>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <section class="stats-grid">
-                <article class="admin-card stat-card">
-                    <span>Hectopunten</span>
-                    <strong><?= number_format((int)$stats['hectopunten'], 0, ',', '.') ?></strong>
-                </article>
-                <article class="admin-card stat-card">
-                    <span>Wegvakken</span>
-                    <strong><?= number_format((int)$stats['wegvakken'], 0, ',', '.') ?></strong>
-                </article>
-                <article class="admin-card stat-card">
-                    <span>Wegen</span>
-                    <strong><?= number_format((int)$stats['roads'], 0, ',', '.') ?></strong>
-                </article>
-            </section>
-
-            <section class="admin-card">
-                <h2>Data importeren</h2>
-                <pre><code>php admin/import-nwb.php all</code></pre>
-                <p>Test eerst klein als je wilt controleren of de PDOK-connectie en MySQL-import goed staan:</p>
-                <pre><code>php admin/import-nwb.php all --max-pages=1</code></pre>
-            </section>
-        <?php endif; ?>
-    </main>
+        <div class="row g-3 mt-1">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="text-muted">Hectopunten</div>
+                    <div class="stat-number"><?= number_format((int)$stats['hectopunten'], 0, ',', '.') ?></div>
+                    <small>NWB punten</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="text-muted">Wegvakken</div>
+                    <div class="stat-number"><?= number_format((int)$stats['wegvakken'], 0, ',', '.') ?></div>
+                    <small>NWB wegvakken</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="text-muted">Wegen</div>
+                    <div class="stat-number"><?= number_format((int)$stats['roads'], 0, ',', '.') ?></div>
+                    <small>Unieke wegnummers</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="text-muted">Database</div>
+                    <div class="stat-number"><?= $db ? 'Online' : '-' ?></div>
+                    <small><?= $db ? 'Verbonden' : 'Niet verbonden' ?></small>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

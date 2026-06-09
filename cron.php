@@ -11,9 +11,6 @@ function cronToken(): ?string
 {
     $credentialsFiles = [
         dirname(__DIR__) . '/cron.credentials.php',
-        dirname(__DIR__) . '/hectometer.cron.credentials.php',
-        dirname(__DIR__) . '/knmi.cron.credentials.php',
-        dirname(__DIR__) . '/incharge.cron.credentials.php',
     ];
 
     foreach ($credentialsFiles as $credentialsFile) {

@@ -41,8 +41,6 @@ final class Database
         $paths = array_values(array_filter([
             $configPath,
             dirname(__DIR__, 2) . '/database.credentials.php',
-            dirname(__DIR__, 2) . '/hectometer.database.credentials.php',
-            dirname(__DIR__) . '/hectometer.database.credentials.php',
         ]));
 
         foreach ($paths as $path) {
