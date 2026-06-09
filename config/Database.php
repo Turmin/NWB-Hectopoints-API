@@ -28,6 +28,7 @@ final class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
+            $this->connection->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
         } catch (PDOException $exception) {
             error_log('Database connection error: ' . $exception->getMessage());
             throw new RuntimeException('Database connection failed.');

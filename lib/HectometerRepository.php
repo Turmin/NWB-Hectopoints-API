@@ -202,8 +202,8 @@ final class HectometerRepository
 
         if ($this->tableExists(HM_TABLE_WEGVAKKEN)) {
             $stats['roads'] = (int)$this->db->query('
-                SELECT COUNT(DISTINCT COALESCE(NULLIF(wegnr_hmp, \'\'), NULLIF(CONCAT(COALESCE(routeltr, \'\'), COALESCE(CAST(routenr AS CHAR), \'\')), \'\'), NULLIF(wegnummer, \'\'), NULLIF(wegnr_aw, \'\')))
-                FROM ' . HM_TABLE_WEGVAKKEN . '
+                SELECT COUNT(DISTINCT ' . $this->roadExpression('w') . ')
+                FROM ' . HM_TABLE_WEGVAKKEN . ' w
             ')->fetchColumn();
         }
 
@@ -372,17 +372,29 @@ final class HectometerRepository
         ';
     }
 
-    private function roadExpression(): string
+    private function roadExpression(string $alias = 'w'): string
     {
+        $wegnrHmp = $this->collatedRoadColumn($alias, 'wegnr_hmp');
+        $routeltr = $this->collatedRoadColumn($alias, 'routeltr');
+        $routenr = 'CAST(' . $alias . '.routenr AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci';
+        $wegnummer = $this->collatedRoadColumn($alias, 'wegnummer');
+        $wegnrAw = $this->collatedRoadColumn($alias, 'wegnr_aw');
+        $empty = '_utf8mb4\'\' COLLATE utf8mb4_unicode_ci';
+
         return "
             UPPER(
                 COALESCE(
-                    NULLIF(w.wegnr_hmp, ''),
-                    NULLIF(CONCAT(COALESCE(w.routeltr, ''), COALESCE(CAST(w.routenr AS CHAR), '')), ''),
-                    NULLIF(w.wegnummer, ''),
-                    NULLIF(w.wegnr_aw, '')
+                    NULLIF($wegnrHmp, $empty),
+                    NULLIF(CONCAT(COALESCE($routeltr, $empty), COALESCE($routenr, $empty)), $empty),
+                    NULLIF($wegnummer, $empty),
+                    NULLIF($wegnrAw, $empty)
                 )
             )
         ";
+    }
+
+    private function collatedRoadColumn(string $alias, string $column): string
+    {
+        return $alias . '.' . $column . ' COLLATE utf8mb4_unicode_ci';
     }
 }
