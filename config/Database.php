@@ -40,8 +40,8 @@ final class Database
     {
         $paths = array_values(array_filter([
             $configPath,
-            dirname(__DIR__, 2) . '/hectometer.database.credentials.php',
             dirname(__DIR__, 2) . '/database.credentials.php',
+            dirname(__DIR__, 2) . '/hectometer.database.credentials.php',
             dirname(__DIR__) . '/hectometer.database.credentials.php',
         ]));
 
@@ -75,7 +75,7 @@ final class Database
         }
 
         throw new RuntimeException(
-            'Database configuration not found. Create hectometer.database.credentials.php outside the webroot or set DB_HOST, DB_NAME, DB_USER and DB_PASSWORD.'
+            'Database configuration not found. Create database.credentials.php outside the webroot or set DB_HOST, DB_NAME, DB_USER and DB_PASSWORD.'
         );
     }
 

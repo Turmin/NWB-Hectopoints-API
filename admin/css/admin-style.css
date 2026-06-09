@@ -122,6 +122,58 @@ body {
     gap: 10px;
 }
 
+.admin-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-toolbar form {
+    margin: 0;
+}
+
+.login-shell {
+    max-width: 560px;
+}
+
+.admin-form,
+.inline-form {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-form label,
+.inline-form label {
+    display: grid;
+    gap: 6px;
+}
+
+.admin-form span,
+.inline-form span {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.admin-form input,
+.inline-form input,
+.inline-form select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--ink);
+    padding: 9px 10px;
+}
+
+.inline-form {
+    grid-template-columns: minmax(170px, 1fr) minmax(120px, 0.5fr) auto;
+    align-items: end;
+}
+
 .alert {
     border-color: rgba(163, 58, 42, 0.38);
     background: #fff5f1;
@@ -160,6 +212,12 @@ code {
     .admin-header {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .admin-toolbar,
+    .inline-form {
+        display: grid;
+        grid-template-columns: 1fr;
     }
 
     .button {

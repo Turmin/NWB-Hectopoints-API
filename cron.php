@@ -9,8 +9,18 @@ $isCli = PHP_SAPI === 'cli';
 
 function cronToken(): ?string
 {
-    $credentialsFile = dirname(__DIR__) . '/hectometer.cron.credentials.php';
-    if (is_file($credentialsFile)) {
+    $credentialsFiles = [
+        dirname(__DIR__) . '/cron.credentials.php',
+        dirname(__DIR__) . '/hectometer.cron.credentials.php',
+        dirname(__DIR__) . '/knmi.cron.credentials.php',
+        dirname(__DIR__) . '/incharge.cron.credentials.php',
+    ];
+
+    foreach ($credentialsFiles as $credentialsFile) {
+        if (!is_file($credentialsFile)) {
+            continue;
+        }
+
         $credentials = require $credentialsFile;
         if (is_array($credentials) && !empty($credentials['token'])) {
             return (string)$credentials['token'];
@@ -26,7 +36,12 @@ function cronArgument(string $name, ?string $default = null): ?string
     global $argv, $isCli;
 
     if (!$isCli) {
-        return isset($_GET[$name]) ? (string)$_GET[$name] : $default;
+        if (isset($_GET[$name])) {
+            return (string)$_GET[$name];
+        }
+
+        $underscoreName = str_replace('-', '_', $name);
+        return isset($_GET[$underscoreName]) ? (string)$_GET[$underscoreName] : $default;
     }
 
     $prefix = '--' . $name . '=';

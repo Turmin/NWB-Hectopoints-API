@@ -4,11 +4,22 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../lib/HectometerRepository.php';
+require_once __DIR__ . '/auth.php';
 
 $messages = [];
 $error = null;
 $stats = null;
 $credentialsPath = dirname(__DIR__, 2) . '/database.credentials.php';
+$flash = null;
+
+adminHandleAuthPost();
+
+if (!adminIsLoggedIn()) {
+    adminRenderAuthPage('NWB setup');
+    exit;
+}
+
+$flash = adminFlash();
 
 function runSchema(PDO $db, string $schemaPath): void
 {
@@ -31,6 +42,7 @@ try {
     $db = (new Database())->connect();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'install') {
+        adminRequireCsrf();
         runSchema($db, __DIR__ . '/../schema.sql');
         $messages[] = 'Schema is bijgewerkt.';
     }
@@ -56,8 +68,21 @@ try {
                 <p class="eyebrow">Hectometerpaaltjes</p>
                 <h1>Setup</h1>
             </div>
-            <a class="button button-light" href="/admin/">Beheer</a>
+            <div class="admin-toolbar">
+                <a class="button button-light" href="/admin/">Beheer</a>
+                <form method="post">
+                    <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
+                    <input type="hidden" name="action" value="logout">
+                    <button class="button button-light" type="submit">Uitloggen</button>
+                </form>
+            </div>
         </header>
+
+        <?php if ($flash): ?>
+            <section class="admin-card <?= h($flash['type'] ?? 'success') ?>">
+                <p><?= h($flash['message'] ?? '') ?></p>
+            </section>
+        <?php endif; ?>
 
         <?php foreach ($messages as $message): ?>
             <section class="admin-card success">
@@ -85,6 +110,7 @@ return [
                 <h2>Database schema</h2>
                 <p>Deze setup maakt de MySQL-tabellen `wegvakken` en `hectopunten` met kolommen voor lon/lat, metadata en indexen.</p>
                 <form method="post">
+                    <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
                     <input type="hidden" name="action" value="install">
                     <button class="button" type="submit">Schema bijwerken</button>
                 </form>
