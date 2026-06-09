@@ -1,0 +1,28 @@
+Options -Indexes
+
+<FilesMatch "(\.sql|\.credentials\.php)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    RewriteRule ^hectometer/([^/]+)/([^/]+)/([^/]+)/?$ index.php?weg=$1&zijde=$2&hm=$3 [QSA,L,B]
+    RewriteRule ^hectometer/([^/]+)/([^/]+)/([^/]+)/([^/]+)/?$ index.php?weg=$1&zijde=$2&hm=$3&letter=$4 [QSA,L,B]
+
+    RewriteRule ^$ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

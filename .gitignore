@@ -1,0 +1,7 @@
+_*
+etmgeg*
+sitemap*
+!sitemap.php
+google*
+*.credentials.php
+.env

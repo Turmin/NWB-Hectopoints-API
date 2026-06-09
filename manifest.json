@@ -1,0 +1,10 @@
+{
+    "name": "Hectometerpaaltjes",
+    "short_name": "Hectometer",
+    "description": "Zoek hectometerpaaltjes op Nederlandse wegen.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f6f3ea",
+    "theme_color": "#f6f3ea",
+    "icons": []
+}
