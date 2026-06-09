@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 final class Database
 {
-    private ?PDO $connection = null;
-    private array $config;
+    private $connection = null;
+    private $config;
 
     public function __construct(?string $configPath = null)
     {

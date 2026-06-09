@@ -63,7 +63,8 @@ $assetVersion = (string)max(
                     <button class="primary-button" type="submit">Zoeken</button>
                 </form>
 
-                <div class="status-line" id="statusLine" role="status">Klaar</div>
+                <div class="status-line" id="statusLine" role="status"></div>
+                <div class="quick-roads" id="quickRoads" aria-label="Snelwegen"></div>
                 <div class="results-list" id="resultsList" aria-label="Resultaten"></div>
             </section>
 

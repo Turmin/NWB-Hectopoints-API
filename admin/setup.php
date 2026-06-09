@@ -8,7 +8,7 @@ require_once __DIR__ . '/../lib/HectometerRepository.php';
 $messages = [];
 $error = null;
 $stats = null;
-$credentialsPath = dirname(__DIR__, 2) . '/hectometer.database.credentials.php';
+$credentialsPath = dirname(__DIR__, 2) . '/database.credentials.php';
 
 function runSchema(PDO $db, string $schemaPath): void
 {

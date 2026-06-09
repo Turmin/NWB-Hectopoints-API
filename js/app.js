@@ -2,10 +2,21 @@
     'use strict';
 
     var initial = window.HM_INITIAL || {};
+    var DEFAULT_ROADS = [
+        'A1', 'A2', 'A4', 'A6', 'A7', 'A8', 'A9', 'A10', 'A12', 'A13',
+        'A15', 'A16', 'A20', 'A27', 'A28', 'A50', 'A58', 'A67', 'A73',
+        'N11', 'N18', 'N33', 'N35', 'N57', 'N59', 'N65', 'N201', 'N206'
+    ];
     var state = {
         activeItem: null,
         results: [],
-        bboxTimer: null
+        bboxTimer: null,
+        roads: DEFAULT_ROADS.map(function (road) {
+            return {
+                road: road,
+                hectopunten: null
+            };
+        })
     };
 
     var els = {
@@ -14,6 +25,7 @@
         hm: document.getElementById('hmInput'),
         side: document.getElementById('sideInput'),
         status: document.getElementById('statusLine'),
+        quickRoads: document.getElementById('quickRoads'),
         results: document.getElementById('resultsList'),
         map: document.getElementById('map'),
         empty: document.getElementById('emptyState'),
@@ -39,6 +51,7 @@
     function setStatus(message, isError) {
         els.status.textContent = message;
         els.status.classList.toggle('is-error', Boolean(isError));
+        els.status.classList.toggle('is-visible', Boolean(message));
     }
 
     function text(value, fallback) {
@@ -70,7 +83,18 @@
                 Accept: 'application/json'
             }
         }).then(function (response) {
-            return response.json().then(function (payload) {
+            return response.text().then(function (text) {
+                if (!text.trim()) {
+                    throw new Error('Lege API-response: controleer PHP error log en databaseconfig.');
+                }
+
+                var payload;
+                try {
+                    payload = JSON.parse(text);
+                } catch (error) {
+                    throw new Error('Ongeldige API-response: ' + text.slice(0, 160));
+                }
+
                 if (!response.ok || payload.success === false) {
                     throw new Error(payload.error || 'Onbekende fout.');
                 }
@@ -99,6 +123,10 @@
         }).addTo(map);
 
         bboxLayer = L.layerGroup().addTo(map);
+        window.setTimeout(function () {
+            map.invalidateSize();
+            loadBboxMarkers();
+        }, 150);
 
         map.on('moveend', function () {
             window.clearTimeout(state.bboxTimer);
@@ -134,8 +162,15 @@
 
         if (map) {
             var latLng = [item.latitude, item.longitude];
+            map.invalidateSize();
             if (!selectedMarker) {
-                selectedMarker = L.marker(latLng).addTo(map);
+                selectedMarker = L.circleMarker(latLng, {
+                    radius: 8,
+                    color: '#125b38',
+                    weight: 2,
+                    fillColor: '#d5961f',
+                    fillOpacity: 0.95
+                }).addTo(map);
             } else {
                 selectedMarker.setLatLng(latLng);
             }
@@ -152,6 +187,44 @@
         }
 
         renderResults(state.results, item.id);
+    }
+
+    function renderRoadButtons() {
+        if (!els.quickRoads) {
+            return;
+        }
+
+        els.quickRoads.innerHTML = '';
+        state.roads.forEach(function (entry) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'road-chip' + (entry.road === els.road.value.trim().toUpperCase() ? ' is-active' : '');
+            button.textContent = entry.road;
+            if (entry.hectopunten !== null && entry.hectopunten !== undefined) {
+                button.title = entry.hectopunten + ' hectopunten';
+            }
+            button.addEventListener('click', function () {
+                els.road.value = entry.road;
+                renderRoadButtons();
+                search(false);
+            });
+            els.quickRoads.appendChild(button);
+        });
+    }
+
+    function loadRoads() {
+        renderRoadButtons();
+        fetchJson(apiUrl('/api/roads.php', {
+            limit: 80
+        })).then(function (payload) {
+            if (!payload.results || !payload.results.length) {
+                return;
+            }
+            state.roads = payload.results;
+            renderRoadButtons();
+        }).catch(function () {
+            renderRoadButtons();
+        });
     }
 
     function renderDetail(item) {
@@ -230,7 +303,7 @@
 
     function loadInitialRoute() {
         if (!initial.road || !initial.hm) {
-            setStatus('Klaar');
+            setStatus('');
             return;
         }
 
@@ -360,13 +433,27 @@
         search(true);
     });
 
+    els.road.addEventListener('input', renderRoadButtons);
     els.share.addEventListener('click', shareActive);
     els.locate.addEventListener('click', locateNearest);
+
+    window.addEventListener('resize', function () {
+        if (map) {
+            map.invalidateSize();
+        }
+    });
+
+    window.addEventListener('load', function () {
+        if (map) {
+            map.invalidateSize();
+        }
+    });
 
     window.addEventListener('popstate', function () {
         window.location.reload();
     });
 
     initMap();
+    loadRoads();
     loadInitialRoute();
 }());

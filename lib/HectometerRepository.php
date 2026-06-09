@@ -6,7 +6,7 @@ require_once __DIR__ . '/Nwb.php';
 
 final class HectometerRepository
 {
-    private PDO $db;
+    private $db;
 
     public function __construct(PDO $db)
     {
@@ -209,6 +209,45 @@ final class HectometerRepository
         return $stats;
     }
 
+    public function roads(int $limit = 80): array
+    {
+        if (!$this->tableExists('wegvakken')) {
+            return [];
+        }
+
+        $limit = max(1, min($limit, 200));
+        $roadExpression = $this->roadExpression();
+        $sql = '
+            SELECT
+                ' . $roadExpression . ' AS road,
+                COUNT(DISTINCT h.id) AS hectopunten
+            FROM wegvakken w
+            LEFT JOIN hectopunten h ON h.wvk_id = w.wvk_id
+            WHERE ' . $roadExpression . ' IS NOT NULL
+            GROUP BY road
+            ORDER BY
+                CASE
+                    WHEN road LIKE \'A%\' THEN 0
+                    WHEN road LIKE \'N%\' THEN 1
+                    ELSE 2
+                END,
+                LENGTH(road),
+                road
+            LIMIT :limit
+        ';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return array_map(static function (array $row): array {
+            return [
+                'road' => nwbNormalizeRoad((string)$row['road']),
+                'hectopunten' => (int)$row['hectopunten'],
+            ];
+        }, $stmt->fetchAll());
+    }
+
     public function tableExists(string $table): bool
     {
         $stmt = $this->db->prepare('
@@ -309,11 +348,21 @@ final class HectometerRepository
                 w.wgtype_oms
                 ' . $extraSelect . '
             FROM hectopunten h
-            LEFT JOIN wegvakken w
-                ON w.wvk_id = h.wvk_id
-                AND (
-                    (w.wvk_begdat IS NULL AND h.wvk_begdat IS NULL)
-                    OR DATE(w.wvk_begdat) = DATE(h.wvk_begdat)
+            LEFT JOIN wegvakken w ON w.id = (
+                SELECT w2.id
+                FROM wegvakken w2
+                WHERE w2.wvk_id = h.wvk_id
+                ORDER BY
+                    CASE
+                        WHEN h.wvk_begdat IS NOT NULL
+                            AND w2.wvk_begdat IS NOT NULL
+                            AND DATE(w2.wvk_begdat) = DATE(h.wvk_begdat)
+                        THEN 0
+                        ELSE 1
+                    END,
+                    w2.wvk_begdat DESC,
+                    w2.id DESC
+                LIMIT 1
                 )
         ';
     }

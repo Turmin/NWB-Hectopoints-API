@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS wegvakken (
+CREATE TABLE IF NOT EXISTS hm_wegvakken (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     bron_id VARCHAR(160) NULL,
     objectid INT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS wegvakken (
     KEY wegvakken_place_idx (wpsnaam, gme_naam)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS hectopunten (
+CREATE TABLE IF NOT EXISTS hm_hectopunten (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     bron_id VARCHAR(160) NULL,
     objectid INT NULL,

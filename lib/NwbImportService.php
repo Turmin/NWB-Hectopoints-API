@@ -6,8 +6,8 @@ require_once __DIR__ . '/Nwb.php';
 
 final class NwbImportService
 {
-    private PDO $db;
-    private string $baseUrl;
+    private $db;
+    private $baseUrl;
 
     public function __construct(PDO $db, string $baseUrl = NWB_API_BASE_URL)
     {
