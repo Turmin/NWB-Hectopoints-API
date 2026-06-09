@@ -61,7 +61,6 @@ try {
     $adminError = $exception->getMessage();
 }
 
-$credentialsPath = adminCredentialsPath();
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -173,7 +172,6 @@ $credentialsPath = adminCredentialsPath();
                             <div class="status-row d-flex justify-content-between"><span>Database connection</span><span class="badge bg-<?= $db ? 'success' : 'danger' ?>"><?= $db ? 'Online' : 'Offline' ?></span></div>
                             <div class="status-row d-flex justify-content-between"><span>Cron token</span><span class="badge bg-<?= $cronTokenConfigured ? 'success' : 'warning' ?>"><?= $cronTokenConfigured ? 'Configured' : 'Missing' ?></span></div>
                             <div class="status-row d-flex justify-content-between"><span>Admin credentials</span><span class="badge bg-success">Configured</span></div>
-                            <div class="status-row d-flex justify-content-between"><span>Credentials path</span><code><?= h($credentialsPath) ?></code></div>
                         </div>
                     </div>
                 </div>

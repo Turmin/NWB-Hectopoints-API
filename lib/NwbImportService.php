@@ -95,7 +95,7 @@ final class NwbImportService
         }
 
         $stmt = $this->db->prepare('
-            INSERT INTO hectopunten (
+            INSERT INTO ' . HM_TABLE_HECTOPUNTEN . ' (
                 bron_id, objectid, wvk_id, wvk_begdat, afstand, hectometrering,
                 hectometer, zijde, hectoletter, longitude, latitude, geometry_geojson,
                 properties_json, updated_at
@@ -153,7 +153,7 @@ final class NwbImportService
         }
 
         $stmt = $this->db->prepare('
-            INSERT INTO wegvakken (
+            INSERT INTO ' . HM_TABLE_WEGVAKKEN . ' (
                 bron_id, objectid, wvk_id, wvk_begdat, wegnummer, wegnr_hmp, wegnr_aw,
                 routeltr, routenr, wegdeelltr, wegtype, wgtype_oms, stt_naam,
                 gme_id, gme_naam, wpsnaam, wegbehcode, wegbehnaam, wegbehsrt,

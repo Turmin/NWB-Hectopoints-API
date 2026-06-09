@@ -187,23 +187,28 @@ final class HectometerRepository
             'last_updated' => null,
         ];
 
-        foreach (['hectopunten', 'wegvakken'] as $table) {
+        $tables = [
+            'hectopunten' => HM_TABLE_HECTOPUNTEN,
+            'wegvakken' => HM_TABLE_WEGVAKKEN,
+        ];
+
+        foreach ($tables as $key => $table) {
             if (!$this->tableExists($table)) {
                 continue;
             }
 
-            $stats[$table] = (int)$this->db->query('SELECT COUNT(*) FROM ' . $table)->fetchColumn();
+            $stats[$key] = (int)$this->db->query('SELECT COUNT(*) FROM ' . $table)->fetchColumn();
         }
 
-        if ($this->tableExists('wegvakken')) {
+        if ($this->tableExists(HM_TABLE_WEGVAKKEN)) {
             $stats['roads'] = (int)$this->db->query('
                 SELECT COUNT(DISTINCT COALESCE(NULLIF(wegnr_hmp, \'\'), NULLIF(CONCAT(COALESCE(routeltr, \'\'), COALESCE(CAST(routenr AS CHAR), \'\')), \'\'), NULLIF(wegnummer, \'\'), NULLIF(wegnr_aw, \'\')))
-                FROM wegvakken
+                FROM ' . HM_TABLE_WEGVAKKEN . '
             ')->fetchColumn();
         }
 
-        if ($this->tableExists('hectopunten')) {
-            $stats['last_updated'] = $this->db->query('SELECT MAX(updated_at) FROM hectopunten')->fetchColumn() ?: null;
+        if ($this->tableExists(HM_TABLE_HECTOPUNTEN)) {
+            $stats['last_updated'] = $this->db->query('SELECT MAX(updated_at) FROM ' . HM_TABLE_HECTOPUNTEN)->fetchColumn() ?: null;
         }
 
         return $stats;
@@ -211,7 +216,7 @@ final class HectometerRepository
 
     public function roads(int $limit = 80): array
     {
-        if (!$this->tableExists('wegvakken')) {
+        if (!$this->tableExists(HM_TABLE_WEGVAKKEN)) {
             return [];
         }
 
@@ -221,8 +226,8 @@ final class HectometerRepository
             SELECT
                 ' . $roadExpression . ' AS road,
                 COUNT(DISTINCT h.id) AS hectopunten
-            FROM wegvakken w
-            LEFT JOIN hectopunten h ON h.wvk_id = w.wvk_id
+            FROM ' . HM_TABLE_WEGVAKKEN . ' w
+            LEFT JOIN ' . HM_TABLE_HECTOPUNTEN . ' h ON h.wvk_id = w.wvk_id
             WHERE ' . $roadExpression . ' IS NOT NULL
             GROUP BY road
             ORDER BY
@@ -347,10 +352,10 @@ final class HectometerRepository
                 w.wegtype,
                 w.wgtype_oms
                 ' . $extraSelect . '
-            FROM hectopunten h
-            LEFT JOIN wegvakken w ON w.id = (
+            FROM ' . HM_TABLE_HECTOPUNTEN . ' h
+            LEFT JOIN ' . HM_TABLE_WEGVAKKEN . ' w ON w.id = (
                 SELECT w2.id
-                FROM wegvakken w2
+                FROM ' . HM_TABLE_WEGVAKKEN . ' w2
                 WHERE w2.wvk_id = h.wvk_id
                 ORDER BY
                     CASE

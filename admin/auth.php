@@ -148,7 +148,6 @@ function adminRenderAuthPage(string $title = 'NWB beheer'): void
 {
     $credentials = adminLoadCredentials();
     $flash = adminFlash();
-    $credentialPath = adminCredentialsPath();
     ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -175,8 +174,7 @@ function adminRenderAuthPage(string $title = 'NWB beheer'): void
                         </div>
                     <?php endif; ?>
             <?php if ($credentials === null): ?>
-                <p class="text-muted">Er is nog geen admin credentials-bestand gevonden. Het bestand wordt buiten de webroot aangemaakt.</p>
-                <pre><code><?= h($credentialPath) ?></code></pre>
+                <p class="text-muted">Er is nog geen admin credentials-bestand gevonden. <code>admin.credentials.php</code> wordt buiten de webroot aangemaakt.</p>
                 <form method="post">
                     <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
                     <input type="hidden" name="action" value="create_admin">

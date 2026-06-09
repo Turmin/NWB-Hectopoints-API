@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 const NWB_API_BASE_URL = 'https://api.pdok.nl/rws/nationaal-wegenbestand-wegen/ogc/v1';
+const HM_TABLE_HECTOPUNTEN = 'hm_hectopunten';
+const HM_TABLE_WEGVAKKEN = 'hm_wegvakken';
 
 function h($value): string
 {

@@ -23,7 +23,6 @@ $stats = [
     'last_updated' => null,
 ];
 $db = null;
-$credentialsPath = dirname(__DIR__, 2) . '/database.credentials.php';
 $adminUser = $_SESSION['admin_user'] ?? 'Admin';
 
 function runSchema(PDO $db, string $schemaPath): void
@@ -106,7 +105,7 @@ try {
                 <div class="admin-card">
                     <div class="card-body">
                         <h2 class="h5 mb-3"><i class="bi bi-database text-primary me-2"></i>Database schema</h2>
-                        <p class="text-muted">Deze setup maakt de MySQL-tabellen <code>wegvakken</code> en <code>hectopunten</code>.</p>
+                        <p class="text-muted">Deze setup maakt de MySQL-tabellen <code>hm_wegvakken</code> en <code>hm_hectopunten</code>.</p>
                         <form method="post" class="d-grid gap-2">
                             <input type="hidden" name="csrf" value="<?= h(adminCsrf()) ?>">
                             <input type="hidden" name="action" value="install">
@@ -120,8 +119,7 @@ try {
                 <div class="admin-card">
                     <div class="card-body">
                         <h2 class="h5 mb-3"><i class="bi bi-key text-primary me-2"></i>Database credentials</h2>
-                        <div class="small text-muted mb-2">Primair bestand buiten de webroot:</div>
-                        <pre><code><?= h($credentialsPath) ?></code></pre>
+                        <div class="small text-muted mb-2">Bestand buiten de webroot: <code>database.credentials.php</code></div>
                         <pre><code>&lt;?php
 return [
     'host' =&gt; 'localhost',
